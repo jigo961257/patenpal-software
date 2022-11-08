@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'"> -->
+    <!-- <title>Hello World!</title> -->
+    <link rel="stylesheet" href="../src/css/home.css">
+</head>
+
+<body>
+    <h1>Welcome to patenpal app</h1>
+    <!-- We are using Node.js <span id="node-version"></span>,
+    Chromium <span id="chrome-version"></span>,
+    and Electron <span id="electron-version"></span>. -->
+
+    <!-- <form  enctype="multipart/form-data" id="uploadForm">
+        Select image to upload:
+        <input type="file" name="fileToUpload" id="fileToUpload">
+        <button type="button" id="btn_upload">
+            upload file
+            </button>
+    </form> -->
+    <br>
+    <button type="button" id="btn">Open a File</button>
+    File path: <strong id="filePath"></strong>
+
+    <br />
+    <br />
+    <br />
+    <button type="button" id="btn_process">Click to save</button>
+    Process at: <strong id="process_at"></strong>
+    <div class="loader" id="loader" hidden></div>
+
+    <script src="../src/js/homejs.js"></script>
+
+</body>
+
+</html>
