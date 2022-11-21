@@ -5,6 +5,7 @@ const puppeteer = require("puppeteer")
 
 let global_win_obj = null;
 const isMac = process.platform === 'darwin'
+let global_path_set = "";
 
 const template = [
     // { role: 'appMenu' }
@@ -21,6 +22,12 @@ const template = [
         label: 'File',
         submenu: [
             isMac ? { role: 'close' } : { role: 'quit' }
+        ]
+    },
+    {
+        label: 'Debug',
+        submenu: [
+            { role: 'toggleDevTools' }
         ]
     },
     {
@@ -42,13 +49,13 @@ const createWindow = () => {
     const win1 = new BrowserWindow({
         height: 600,
         width: 800,
-        title:"patenpal-app",
+        title: "patenpal-app",
         webPreferences: {
             preload: path.join(__dirname, "/src/preloads/homePreload.js")
         }
     });
     global_win_obj = win1;
-    // win1.webContents.openDevTools();
+    win1.webContents.openDevTools();
 
     win1.loadFile("pages/home.html");
 }
@@ -59,6 +66,13 @@ app.whenReady().then(() => {
     createWindow();
     ipcMain.on("dialog:openFile", handleFileOpen)
     ipcMain.on('dialog:saveFile', hadelfil_dowload)
+    // ipcMain.on('set:path', savePathOfExstension)
+    ipcMain.on('set:path', (event, title) => {
+        // const webContents = event.sender
+        console.log(title);
+        global_path_set = title;
+        // savePathOfExstension(title)
+    })
     app.on("activate", () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
@@ -113,8 +127,9 @@ async function performACtion(file_path) {
     console.log("raw_worksheet_data_len : ", raw_worksheet_data_len);
     try {
         const broweser = await puppeteer.launch({
-            headless: true,
+            headless: false,
             // executablePath: "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+            executablePath: global_path_set
 
         });
         global_win_obj.webContents.send('update-status', { status: 2, message: "perform action in file" })
@@ -221,6 +236,7 @@ async function performACtion(file_path) {
         })
     } catch (err) {
         console.log("err => \n", err);
+        global_win_obj.webContents.send('update-status', { status: 500, message: err })
     }
     // setTimeout(() => {
     //     global_win_obj.webContents.send('update-status', { status: 200, message: "file process done, dowload it" })
@@ -251,4 +267,8 @@ async function hadelfil_dowload() {
         // console.log(wb);
         xlsAll.writeFile(wb, filePath)
     }
+}
+
+function savePathOfExstension(data) {
+    console.log("data => ", data);
 }

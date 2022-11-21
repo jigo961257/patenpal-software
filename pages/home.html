@@ -22,6 +22,15 @@
             </button>
     </form> -->
     <br>
+    <!-- <form id="for-path-form">
+        <input type="text" id="path_exs" />
+        <input type="submit" />
+    </form> -->
+
+    Title: <input id="title"/>
+    <button id="btn_path" type="button">Set</button>
+    <br />
+
     <button type="button" id="btn">Open a File</button>
     File path: <strong id="filePath"></strong>
 
@@ -31,6 +40,10 @@
     <button type="button" id="btn_process">Click to save</button>
     Process at: <strong id="process_at"></strong>
     <div class="loader" id="loader" hidden></div>
+    <div id="error-container" hidden>
+        <h2>error coocure while process</h2>
+        <p id="error"></p>
+    </div>
 
     <script src="../src/js/homejs.js"></script>
 
