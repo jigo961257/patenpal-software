@@ -2,11 +2,16 @@ const { app, BrowserWindow, dialog, ipcMain, Menu } = require("electron")
 const path = require("path")
 const xlsAll = require("xlsx")
 const puppeteer = require("puppeteer")
+const fs = require("fs");
+const PizZip = require("pizzip");
+const Docxtemplater = require("docxtemplater");
 
 let global_win_obj = null;
 const isMac = process.platform === 'darwin'
 let global_path_set = "";
+const downloadPath = path.resolve('./download');
 
+// for the menu setup of electron
 const template = [
     // { role: 'appMenu' }
     ...(isMac ? [{
@@ -45,6 +50,13 @@ Menu.setApplicationMenu(menu)
 const delay = ms => new Promise(
     resolve => setTimeout(resolve, ms)
 );
+
+// for the word doc setup file
+var make_sizzp = new PizZip();
+
+
+
+
 const createWindow = () => {
     const win1 = new BrowserWindow({
         height: 600,
@@ -97,6 +109,49 @@ async function handleFileOpen() {
 var wb = xlsAll.utils.book_new();
 let worksheets_of_read = {}
 let worksheets_of_write = {}
+
+
+async function performModificationOfWordDoc(data, key) {
+    console.log('called start the word doc');
+    switch (key) {
+        case 1:
+            console.log('called start the word doc');
+            doc.render({
+                "TITLE EXCEL - PARAPHRASE ": "John 1",
+                " Field of Invention EXCEL – PARAPHRASE": "Doe 1",
+                "Object EXCEL - PARAPHRASE ": "0652455478 1",
+                "Brief Description of Drawing – Patentpal": "New Website 1",
+            });
+
+            break;
+        case 2:
+            doc.render({
+                "TITLE EXCEL - PARAPHRASE ": "John 2",
+                " Field of Invention EXCEL – PARAPHRASE": "Doe 2",
+                "Object EXCEL - PARAPHRASE ": "0652455478 2",
+                "Brief Description of Drawing – Patentpal": "New Website 2",
+            });
+            break;
+        case 3:
+            doc.render({
+                "TITLE EXCEL - PARAPHRASE ": "John 3",
+                " Field of Invention EXCEL – PARAPHRASE": "Doe 3",
+                "Object EXCEL - PARAPHRASE ": "0652455478 3",
+                "Brief Description of Drawing – Patentpal": "New Website 3",
+            });
+            break;
+        case 4:
+            doc.render({
+                "TITLE EXCEL - PARAPHRASE ": "John 4",
+                " Field of Invention EXCEL – PARAPHRASE": "Doe 4",
+                "Object EXCEL - PARAPHRASE ": "0652455478 4",
+                "Brief Description of Drawing – Patentpal": "New Website 4",
+            });
+            break;
+        default:
+            break;
+    }
+}
 
 async function performACtion(file_path) {
     const read_file = xlsAll.readFile(file_path)
@@ -152,6 +207,19 @@ async function performACtion(file_path) {
                                     message: ("detect claims:" + raw_worksheet_data_len + " claims processing..")
                                 })
                             while (i !== raw_worksheet_data_len) {
+                                // for the word doc file
+                                const content = fs.readFileSync(
+                                    path.resolve(__dirname, "filesOuts/Template Automation.docx"),
+                                    "binary"
+                                );
+
+                                const zip = new PizZip(content);
+
+                                const doc = new Docxtemplater(zip, {
+                                    paragraphLoop: true,
+                                    linebreaks: true,
+                                    delimiters: { start: "{{", end: "}}" },
+                                });
 
                                 const getClaimBox = "#quill-claims"
                                 await page.waitForSelector(getClaimBox).then(async () => {
@@ -168,18 +236,22 @@ async function performACtion(file_path) {
                                                     await page.click(getClickButton).then(async () => {
                                                         const letWaitUntilDownloadVisiable = "button[class='v-btn v-btn--text theme--light v-size--default']"
                                                         await page.waitForSelector(letWaitUntilDownloadVisiable).then(async () => {
-                                                            let final_output_data = await page.evaluate((c, b_sum, b_dis_fig, d_dis, d_abs) => {
+                                                            let final_output_data = await page.evaluate(async (c, b_sum, b_dis_fig, d_dis, d_abs) => {
                                                                 let element = document.querySelector("#quill-description div.ql-editor").children;
                                                                 for (let i = 0; i < element.length; i++) {
                                                                     if (element[i].tagName == "H2") {
                                                                         c += 1;
                                                                     } else if (element[i].tagName === "P" && c == 1) {
+                                                                        // await performModificationOfWordDoc(null, c)
                                                                         b_sum.push(element[i].textContent)
                                                                     } else if (element[i].tagName === "P" && c == 2) {
+                                                                        // await performModificationOfWordDoc(null, c)
                                                                         b_dis_fig.push(element[i].textContent)
                                                                     } else if (element[i].tagName === "P" && c == 3) {
+                                                                        // await performModificationOfWordDoc(null, c)
                                                                         d_dis.push(element[i].textContent)
                                                                     } else if (element[i].tagName === "P" && c == 4) {
+                                                                        // await performModificationOfWordDoc(null, c)
                                                                         d_abs.push(element[i].textContent)
                                                                     } else {
                                                                         c = 0;
@@ -213,11 +285,67 @@ async function performACtion(file_path) {
                                         });
                                     })
                                 });
+                                // let get_image = await page.evaluate(() => {
+                                //     const SVG = document.querySelector('svg');
+
+                                //     const XML = new XMLSerializer().serializeToString(SVG);
+                                //     const SVG64 = btoa(XML);
+
+                                //     const img = new Image();
+                                //     img.height = 500;
+                                //     img.width = 500;
+                                //     img.src = 'data:image/svg+xml;base64,' + SVG64
+                                //     return img
+                                // })
                                 global_win_obj.webContents.send('update-status',
                                     {
                                         status: 4,
                                         message: ("claims complete :" + (i + 1).toString() + "/" + raw_worksheet_data_len)
                                     })
+                                // await page.evaluate(async (d) => {
+                                //     let download_btn = document.querySelector("#download");
+                                //     download_btn.click();
+                                //     await d(2000);
+                                //     let dow_btn = document.querySelector(".downloadMenu")
+                                //     dow_btn.children[0].children[2].click();
+                                // }, delay)
+                                await delay(1500);
+                                global_win_obj.webContents.send('update-status',
+                                    {
+                                        status: 5,
+                                        message: ("start the word docprocess of :" + (i + 1).toString())
+                                    })
+                                doc.setData({
+                                    summary_patepal: worksheets_of_write.patenpal[i]["Brife Summary"],
+                                    brief_disc_of_drawings_patenpal: worksheets_of_write.patenpal[i]["Brife Discription of Figure"],
+                                    brief_disc_of_drawings_patenpal: worksheets_of_write.patenpal[i]["Brife Summary"],
+                                    details_dis_patenpal: worksheets_of_write.patenpal[i]["Detailed Description"],
+                                    patentpal_abs: worksheets_of_write.patenpal[i]["Abstract"],
+                                })
+
+                                try {
+                                    // render the document (replace all occurences of {first_name} by John, {last_name} by Doe, ...)
+                                    doc.render()
+                                }
+                                catch (error) {
+                                    var e = {
+                                        message: error.message,
+                                        name: error.name,
+                                        stack: error.stack,
+                                        properties: error.properties,
+                                    }
+                                    console.log(JSON.stringify({ error: e }));
+                                    // The error thrown here contains additional information when logged with JSON.stringify (it contains a property object).
+                                    throw error;
+                                }
+
+                                var buf = doc.getZip()
+                                    .generate({ type: 'nodebuffer' });
+                                let file_name = 'output_i' + i + '_.docx';
+                                make_sizzp.file(file_name, buf)
+                                fs.writeFileSync(path.resolve(__dirname, 'filesOuts/out_folder/' + file_name), buf);
+                                console.log("complete the opration ", i);
+
                                 console.log("current text pick = ", i);
                                 i++;
                                 console.log("now text pick = ", i);
@@ -226,6 +354,7 @@ async function performACtion(file_path) {
                             }
                             // console.log(worksheets_of_write.patenpal);
                             // xlsAll.utils.sheet_add_json(worksheets_of_write, worksheets_of_write.patenpal)
+
 
                             await broweser.close();
                             global_win_obj.webContents.send('update-status', { status: 200, message: "claim process done, dowload it" })
@@ -255,19 +384,43 @@ async function performACtion(file_path) {
 }
 
 async function hadelfil_dowload() {
-    let get_localpath = path.resolve(app.getPath("desktop"), "final_output.xlsx")
+    let get_localpath = path.resolve(app.getPath("desktop"), "final_output_zip.zip")
     const { canceled, filePath } = await dialog.showSaveDialog(global_win_obj, { defaultPath: get_localpath })
     if (canceled) {
         return
     } else {
+        // fs.writeFileSync(path.resolve(__dirname, 'filesOuts/out_put_excel/output_.xlsx'), wb);
+        xlsAll.utils.sheet_add_json(wb.Sheets["patenpal"], worksheets_of_write.patenpal)
+        xlsAll.writeFile(wb, "filesOuts/out_folder/finwl_extl.xlsx")
+        await delay(3000);
+        let get_exls = fs
+            .readFileSync(path.resolve(__dirname, 'filesOuts/out_folder/finwl_extl.xlsx'), 'utf-8');
+        var zip_for_exlce = new PizZip(get_exls, {});
+        var doc_excel = new Docxtemplater(zip_for_exlce);
+        var buf = doc_excel.getZip()
+            .generate({ type: 'nodebuffer' });
+        make_sizzp.file("filesOuts/out_folder/finwl_extl.xlsx", buf);
+
+        var content_1 = null;
+        if (PizZip.support.uint8array) {
+            content_1 = make_sizzp.generate({ type: "uint8array" });
+        } else {
+            content_1 = make_sizzp.generate({ type: "string" });
+        }
+
+        fs.writeFileSync(path.resolve(__dirname, 'filesOuts/out_folder/output_.zip'), content_1);
         console.log("file is save at: ", filePath);
+
         // console.log(worksheets_of_write);
         // wb = worksheets_of_write
-        xlsAll.utils.sheet_add_json(wb.Sheets["patenpal"], worksheets_of_write.patenpal)
+
+        //it's require
+        // xlsAll.utils.sheet_add_json(wb.Sheets["patenpal"], worksheets_of_write.patenpal)
         // console.log(wb);
-        xlsAll.writeFile(wb, filePath)
+        // xlsAll.writeFile(wb, filePath)
     }
 }
+
 
 function savePathOfExstension(data) {
     console.log("data => ", data);

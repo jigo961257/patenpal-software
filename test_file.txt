@@ -1,0 +1,11 @@
+for the get figure file from the sites
+
+const SVG = document.querySelector('svg');
+
+const XML = new XMLSerializer().serializeToString(SVG);
+const SVG64 = btoa(XML);
+
+const img = new Image();
+img.height = 500;
+img.width = 500;
+img.src = 'data:image/svg+xml;base64,' + SVG64
